@@ -1,0 +1,297 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+
+:root {
+  --pure-black: #000000;
+  --card-glass: rgba(15, 15, 15, 0.7);
+  --border-sharp: #333333;
+  --input-bg: #0A0A0A;
+  --accent: #00E676;
+  --accent-hover: #00C853;
+  --accent-dim: rgba(0, 230, 118, 0.15);
+  --purple: #7C4DFF;
+  --purple-dim: rgba(124, 77, 255, 0.15);
+  --status-red: #FF1744;
+  --text-main: #FFFFFF;
+  --text-muted: #888888;
+  --text-dim: #555555;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--pure-black);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--pure-black);
+}
+
+/* ── Glass Panel ── */
+.glass-panel {
+  background: var(--card-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-sharp);
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Mono Input ── */
+.mono-input {
+  font-family: 'JetBrains Mono', monospace;
+  width: 100%;
+  padding: 16px 16px 16px 48px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-sharp);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mono-input::placeholder {
+  color: #444;
+}
+
+.mono-input:focus {
+  border-color: rgba(0, 230, 118, 0.5);
+  box-shadow: 0 0 0 2px rgba(0, 230, 118, 0.15);
+}
+
+/* ── Accent Button ── */
+.btn-accent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px 24px;
+  background-color: var(--accent);
+  color: var(--pure-black);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 0 15px rgba(0, 230, 118, 0.3);
+}
+
+.btn-accent:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px rgba(0, 230, 118, 0.5);
+}
+
+.btn-accent:active {
+  transform: translateY(0);
+}
+
+.btn-accent:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Danger Button ── */
+.btn-danger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid rgba(255, 23, 68, 0.5);
+  color: var(--status-red);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 2px;
+}
+
+.btn-danger:hover {
+  background: rgba(255, 23, 68, 0.1);
+  text-shadow: 0 0 10px rgba(255, 23, 68, 0.4);
+}
+
+/* ── Background Grid ── */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, #111 1px, transparent 1px),
+    linear-gradient(to bottom, #111 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Glow Blob ── */
+.glow-blob {
+  position: fixed;
+  top: -20%;
+  left: 20%;
+  width: 60%;
+  height: 60%;
+  background: rgba(0, 230, 118, 0.05);
+  border-radius: 50%;
+  filter: blur(150px);
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Status Dot ── */
+.status-dot {
+  position: relative;
+  display: inline-flex;
+  width: 8px;
+  height: 8px;
+}
+
+.status-dot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.status-dot::after {
+  content: '';
+  position: relative;
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* ── QR Container ── */
+.qr-container {
+  position: relative;
+  padding: 16px;
+  background: white;
+  box-shadow: 0 0 60px rgba(255, 255, 255, 0.15);
+}
+
+.qr-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  z-index: 20;
+}
+
+.qr-corner.top-left {
+  top: -4px; left: -4px;
+  border-top: 2px solid black;
+  border-left: 2px solid black;
+}
+
+.qr-corner.top-right {
+  top: -4px; right: -4px;
+  border-top: 2px solid black;
+  border-right: 2px solid black;
+}
+
+.qr-corner.bottom-left {
+  bottom: -4px; left: -4px;
+  border-bottom: 2px solid black;
+  border-left: 2px solid black;
+}
+
+.qr-corner.bottom-right {
+  bottom: -4px; right: -4px;
+  border-bottom: 2px solid black;
+  border-right: 2px solid black;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--pure-black); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* ── Label ── */
+.mono-label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+  margin-left: 4px;
+}
+
+/* ── Footer Text ── */
+.footer-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #444;
+}
+
+/* ── Error shake ── */
+.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* Loading spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
