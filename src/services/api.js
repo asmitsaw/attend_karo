@@ -29,7 +29,7 @@ export function clearSessionData() {
 // ──────────────────────────────────────────────
 // API helpers with timeout + abort support
 // ──────────────────────────────────────────────
-async function safeFetch(url, options = {}, timeoutMs = 10000) {
+async function safeFetch(url, options = {}, timeoutMs = 20000) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -47,7 +47,7 @@ async function safeFetch(url, options = {}, timeoutMs = 10000) {
         return res.json();
     } catch (err) {
         if (err.name === 'AbortError') {
-            throw new Error('Request timed out. Check your connection.');
+            throw new Error('Request timed out. Server is busy, please retry.');
         }
         throw err;
     } finally {
@@ -70,7 +70,7 @@ export async function validateSession(sessionCode) {
  * Fetch a fresh QR token for a session
  */
 export async function fetchQRToken(sessionId) {
-    return safeFetch(`${API_BASE}/display/${sessionId}/qr-token`, {}, 8000);
+    return safeFetch(`${API_BASE}/display/${sessionId}/qr-token`, {}, 15000);
 }
 
 /**
