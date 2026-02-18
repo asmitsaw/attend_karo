@@ -1,13 +1,46 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { validateSession } from '../services/api';
+import { validateSession, storeSessionData } from '../services/api';
 
 export default function SessionSetup() {
     const [sessionCode, setSessionCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [statusText, setStatusText] = useState('');
     const inputRef = useRef(null);
     const navigate = useNavigate();
+
+    // Terminal typing effect for status text
+    useEffect(() => {
+        const lines = [
+            '> System initialized...',
+            '> QR engine ready...',
+            '> Awaiting session code...',
+        ];
+        let lineIndex = 0;
+        let charIndex = 0;
+        let currentText = '';
+
+        const typeInterval = setInterval(() => {
+            if (lineIndex >= lines.length) {
+                clearInterval(typeInterval);
+                return;
+            }
+
+            const line = lines[lineIndex];
+            if (charIndex < line.length) {
+                currentText += line[charIndex];
+                setStatusText(currentText);
+                charIndex++;
+            } else {
+                currentText += '\n';
+                lineIndex++;
+                charIndex = 0;
+            }
+        }, 30);
+
+        return () => clearInterval(typeInterval);
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -18,14 +51,17 @@ export default function SessionSetup() {
 
         try {
             const data = await validateSession(sessionCode.trim());
-            // Navigate to QR display with session info
-            navigate(`/display/${data.session.id}`, {
-                state: {
-                    session: data.session,
-                    studentsScanned: data.studentsScanned,
-                    sessionCode: sessionCode.trim().toUpperCase(),
-                },
+
+            // Store in sessionStorage (not URL state) for security
+            storeSessionData({
+                session: data.session,
+                sessionCode: sessionCode.trim().toUpperCase(),
+                totalEnrolled: data.totalEnrolled,
+                config: data.config,
             });
+
+            // Navigate — no sensitive state in URL
+            navigate(`/display/${data.session.id}`);
         } catch (err) {
             setError(err.message || 'Invalid session code');
             // Shake animation
@@ -39,7 +75,10 @@ export default function SessionSetup() {
     return (
         <>
             {/* Background effects */}
-            <div className="glow-blob" />
+            <div className="bg-grid" />
+            <div className="glow-blob glow-blob--green" />
+            <div className="glow-blob glow-blob--purple" />
+            <div className="scan-lines" />
 
             <main
                 style={{
@@ -53,7 +92,10 @@ export default function SessionSetup() {
                     padding: '24px',
                 }}
             >
-                <div className="glass-panel" style={{ width: '100%', maxWidth: 440, padding: '40px' }}>
+                <div
+                    className="glass-panel scale-in"
+                    style={{ width: '100%', maxWidth: 460, padding: '48px 40px' }}
+                >
                     {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: 40 }}>
                         <div
@@ -61,14 +103,15 @@ export default function SessionSetup() {
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                width: 56,
-                                height: 56,
-                                borderRadius: 12,
-                                background: 'var(--input-bg)',
-                                border: '1px solid var(--border-sharp)',
+                                width: 64,
+                                height: 64,
+                                borderRadius: 14,
+                                background: 'var(--accent-dim)',
+                                border: '1px solid rgba(0, 230, 118, 0.15)',
                                 marginBottom: 24,
                                 color: 'var(--accent)',
-                                fontSize: 30,
+                                fontSize: 32,
+                                boxShadow: '0 0 30px rgba(0, 230, 118, 0.1)',
                             }}
                         >
                             <span className="material-icons-round">qr_code_2</span>
@@ -76,11 +119,15 @@ export default function SessionSetup() {
                         <h1
                             style={{
                                 fontFamily: "'Inter', sans-serif",
-                                fontSize: 22,
-                                fontWeight: 700,
-                                letterSpacing: '0.04em',
+                                fontSize: 26,
+                                fontWeight: 800,
+                                letterSpacing: '0.06em',
                                 textTransform: 'uppercase',
-                                marginBottom: 8,
+                                marginBottom: 10,
+                                background: 'linear-gradient(135deg, var(--text-main) 0%, var(--accent) 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
                             }}
                         >
                             Attend Karo
@@ -91,18 +138,39 @@ export default function SessionSetup() {
                                 fontSize: 10,
                                 color: 'var(--text-muted)',
                                 textTransform: 'uppercase',
-                                letterSpacing: '0.15em',
+                                letterSpacing: '0.18em',
                             }}
                         >
                             Session Management Console
                         </p>
                     </div>
 
+                    {/* Terminal Status */}
+                    <div
+                        style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontSize: 10,
+                            color: 'var(--text-dim)',
+                            padding: '12px 14px',
+                            background: 'rgba(0,0,0,0.3)',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--border-sharp)',
+                            marginBottom: 28,
+                            whiteSpace: 'pre-line',
+                            lineHeight: 1.8,
+                            letterSpacing: '0.04em',
+                            minHeight: 60,
+                        }}
+                    >
+                        {statusText}
+                        <span className="cursor-blink" />
+                    </div>
+
                     {/* Form */}
                     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                         <div>
                             <label className="mono-label" htmlFor="session-id">
-                                SESSION_ID_INPUT
+                                SESSION_CODE
                             </label>
                             <div style={{ position: 'relative' }} ref={inputRef}>
                                 <div
@@ -114,8 +182,8 @@ export default function SessionSetup() {
                                         display: 'flex',
                                         alignItems: 'center',
                                         pointerEvents: 'none',
-                                        color: sessionCode ? 'var(--accent)' : '#444',
-                                        transition: 'color 0.2s',
+                                        color: sessionCode ? 'var(--accent)' : 'var(--text-dim)',
+                                        transition: 'color 0.3s',
                                     }}
                                 >
                                     <span className="material-icons-round" style={{ fontSize: 18 }}>
@@ -126,7 +194,7 @@ export default function SessionSetup() {
                                     id="session-id"
                                     className="mono-input"
                                     type="text"
-                                    placeholder="CS-101-2023-A"
+                                    placeholder="Enter session code"
                                     value={sessionCode}
                                     onChange={(e) => {
                                         setSessionCode(e.target.value.toUpperCase());
@@ -134,34 +202,62 @@ export default function SessionSetup() {
                                     }}
                                     autoComplete="off"
                                     autoFocus
+                                    maxLength={20}
                                     required
                                 />
                             </div>
-                            <p
+
+                            {/* Status / Error message */}
+                            <div
                                 style={{
                                     fontFamily: "'JetBrains Mono', monospace",
                                     fontSize: 10,
-                                    color: error ? 'var(--status-red)' : '#444',
-                                    marginTop: 8,
+                                    marginTop: 10,
                                     marginLeft: 4,
                                     textTransform: 'uppercase',
-                                    letterSpacing: '0.04em',
-                                    transition: 'color 0.2s',
+                                    letterSpacing: '0.06em',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    transition: 'color 0.3s',
+                                    color: error ? 'var(--status-red)' : 'var(--text-dim)',
                                 }}
                             >
-                                {error ? `> Error: ${error}` : '> Waiting for administrative input...'}
-                            </p>
+                                <span
+                                    className="material-icons-round"
+                                    style={{
+                                        fontSize: 12,
+                                        color: error ? 'var(--status-red)' : 'var(--text-dim)',
+                                    }}
+                                >
+                                    {error ? 'error_outline' : 'chevron_right'}
+                                </span>
+                                <span>
+                                    {error
+                                        ? error
+                                        : sessionCode.trim()
+                                            ? `Code: ${sessionCode.trim()}`
+                                            : 'Waiting for input...'}
+                                </span>
+                            </div>
                         </div>
 
                         <div style={{ paddingTop: 8 }}>
-                            <button className="btn-accent" type="submit" disabled={loading || !sessionCode.trim()}>
+                            <button
+                                className="btn-accent"
+                                type="submit"
+                                disabled={loading || !sessionCode.trim()}
+                            >
                                 {loading ? (
                                     <span className="spinner" />
                                 ) : (
                                     <>
-                                        <span>Generate QR Code</span>
                                         <span className="material-icons-round" style={{ fontSize: 18 }}>
-                                            arrow_forward_ios
+                                            play_arrow
+                                        </span>
+                                        <span>Initialize QR Display</span>
+                                        <span className="material-icons-round" style={{ fontSize: 14 }}>
+                                            arrow_forward
                                         </span>
                                     </>
                                 )}
@@ -172,7 +268,7 @@ export default function SessionSetup() {
                     {/* Footer */}
                     <div
                         style={{
-                            marginTop: 32,
+                            marginTop: 36,
                             paddingTop: 24,
                             borderTop: '1px solid var(--border-sharp)',
                             display: 'flex',
@@ -182,13 +278,17 @@ export default function SessionSetup() {
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span className="status-dot" />
-                            <span className="footer-text" style={{ color: 'var(--text-dim)' }}>
-                                System Active
-                            </span>
+                            <span className="footer-text">System Online</span>
                         </div>
-                        <span className="footer-text" style={{ color: 'var(--text-dim)' }}>
-                            Build 2.4.0
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span
+                                className="material-icons-round"
+                                style={{ fontSize: 12, color: 'var(--text-dim)' }}
+                            >
+                                security
+                            </span>
+                            <span className="footer-text">Encrypted</span>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -198,12 +298,12 @@ export default function SessionSetup() {
                 style={{
                     position: 'relative',
                     zIndex: 10,
-                    padding: '24px 0',
+                    padding: '20px 0',
                     textAlign: 'center',
                 }}
             >
-                <p className="footer-text" style={{ color: '#333' }}>
-                    © 2024 Attend Karo Systems.
+                <p className="footer-text" style={{ color: 'var(--text-dim)' }}>
+                    © 2024 Attend Karo Systems — Secure Attendance Infrastructure
                 </p>
             </footer>
 
